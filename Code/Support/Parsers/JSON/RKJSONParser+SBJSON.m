@@ -9,6 +9,7 @@
 #import "RKJSONParser.h"
 #import "SBJsonParser.h"
 #import "NSObject+SBJSON.h"
+#import "SBJsonWriter.h"
 
 @implementation RKJSONParser
 
@@ -25,7 +26,10 @@
 }
 
 - (NSString*)stringFromObject:(id)object {
-	return [object JSONRepresentation];
+	SBJsonParser *writer = [[SBJsonWriter alloc] init];
+	NSString *result = [writer stringWithObject:object];
+	[writer release];
+	return result;
 }
 
 @end
