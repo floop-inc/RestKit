@@ -225,51 +225,6 @@
     // TODO: IMPLEMENT ME
 }
 
-// TODO: re-implement these specs when we re-implement xml parsing.
-//- (void)itShouldMapFromXML {
-//	RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
-//	mapper.format = RKMappingFormatXML;
-//	[mapper registerClass:[RKMappableObject class] forElementNamed:@"test_serialization_class"];
-//	[mapper registerClass:[RKMappableObject class] forElementNamed:@"test_serialization_class"];
-//	[mapper registerClass:[RKMappableAssociation class] forElementNamed:@"has_many"];
-//	[mapper registerClass:[RKMappableAssociation class] forElementNamed:@"has_one"];
-//	id result = [mapper mapFromString:[self xmlString]];
-//	
-//	[expectThat(result) shouldNot:be(nil)];
-//	[expectThat([result dateTest]) shouldNot:be(nil)];
-//	[expectThat([result numberTest]) should:be(2)];
-//	[expectThat([result stringTest]) should:be(@"SomeString")];
-//	
-//	[expectThat([result hasOne]) shouldNot:be(nil)];
-//	[expectThat([[result hasOne] testString]) should:be(@"A String")];
-//	
-//	[expectThat([result hasMany]) shouldNot:be(nil)];
-//	[expectThat([[result hasMany] count]) should:be(2)];
-//}
-//
-//- (void)itShouldMapObjectsFromXML {
-//	RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
-//	mapper.format = RKMappingFormatXML;
-//	[mapper registerClass:[RKMappableObject class] forElementNamed:@"test_serialization_class"];
-//	[mapper registerClass:[RKMappableObject class] forElementNamed:@"test_serialization_class"];
-//	[mapper registerClass:[RKMappableAssociation class] forElementNamed:@"has_many"];
-//	[mapper registerClass:[RKMappableAssociation class] forElementNamed:@"has_one"];
-//	NSArray* results = [mapper mapFromString:[self xmlCollectionString]];
-//	[expectThat([results count]) should:be(2)];
-//	
-//	RKMappableObject* result = (RKMappableObject*) [results objectAtIndex:0];
-//	[expectThat(result) shouldNot:be(nil)];
-//	[expectThat([result dateTest]) shouldNot:be(nil)];
-//	[expectThat([result numberTest]) should:be(2)];
-//	[expectThat([result stringTest]) should:be(@"SomeString")];
-//	
-//	[expectThat([result hasOne]) shouldNot:be(nil)];
-//	[expectThat([[result hasOne] testString]) should:be(@"A String")];
-//	
-//	[expectThat([result hasMany]) shouldNot:be(nil)];
-//	[expectThat([[result hasMany] count]) should:be(2)];
-//}
-
 - (void)itShouldNotUpdateNilPropertyToNil {
 	RKObjectMapperSpecModel* model = [[[RKObjectMapperSpecModel alloc] init] autorelease];
 	RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
@@ -315,12 +270,40 @@
 
 - (void)itShouldBeAbleToSetNonNilNSDatePropertiesToNonNil {
 	RKObjectMapperSpecModel* model = [[[RKObjectMapperSpecModel alloc] init] autorelease];
-	RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
+	RKObjectMapper* mapper = [[[RKObjectMapper alloc] init] autorelease];
 	
 	model.createdAt = [NSDate date];
 	[mapper updateModel:model ifNewPropertyValue:[NSDate dateWithTimeIntervalSince1970:0] forPropertyNamed:@"createdAt"];
-	[expectThat(model.createdAt) should:be([NSDate dateWithTimeIntervalSince1970:0])];	
+	[expectThat(model.createdAt) should:be([NSDate dateWithTimeIntervalSince1970:0])];
 }
+
+- (void)itShouldIgnoreMissingElementPropertyWhenMappingRelationships {
+    RKMappableObject* object = [[RKMappableObject new] autorelease];
+    RKMappableAssociation* association = [[RKMappableAssociation new] autorelease];
+    object.hasOne = association;
+    object.hasMany = [NSSet setWithObject:object];
+    RKObjectMapper* mapper = [[[RKObjectMapper alloc] init] autorelease];
+    mapper.missingElementMappingPolicy = RKIgnoreMissingElementMappingPolicy;
+    NSString* JSON = @"{ \"string_test\": \"woot!\" }";
+    [mapper mapObject:object fromString:JSON];
+    [expectThat(object.hasOne) shouldNot:be(nil)];
+    [expectThat(object.hasMany) shouldNot:be(nil)];
+}
+
+- (void)itShouldSetNilMissingElementPropertyWhenMappingRelationships {
+    RKMappableObject* object = [[RKMappableObject new] autorelease];
+    RKMappableAssociation* association = [[RKMappableAssociation new] autorelease];
+    object.hasOne = association;
+    object.hasMany = [NSSet setWithObject:object];
+    RKObjectMapper* mapper = [[[RKObjectMapper alloc] init] autorelease];
+    mapper.missingElementMappingPolicy = RKSetNilForMissingElementMappingPolicy;
+    NSString* JSON = @"{ \"string_test\": \"woot!\" }";
+    [mapper mapObject:object fromString:JSON];
+    [expectThat(object.hasOne) should:be(nil)];
+    [expectThat(object.hasMany) should:be(nil)];
+}
+
+// TODO: Factor these payloads out somehow to improve test clarity...
 
 - (NSString*)jsonString {
 	return
@@ -579,6 +562,165 @@
     NSLog(@"[Modeled] Array is %@", array);
     NSLog(@"[Modeled] First object is: %@", [array objectAtIndex:0]);
     NSLog(@"[Modeled] Route on first object is: %@", [[array objectAtIndex:0] route]);
+}
+
+@end
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+#pragma mark - Duplicated Keys
+
+@interface RKFoursquareUser : RKObject {
+    NSString* _firstName;
+    NSString* _lastName;
+    NSArray* _checkins;
+    NSArray* _mayorships;
+}
+
+@property (nonatomic, retain) NSString* firstName;
+@property (nonatomic, retain) NSString* lastName;
+@property (nonatomic, retain) NSArray* checkins;
+@property (nonatomic, retain) NSArray* mayorships;
+
+@end
+
+@implementation RKFoursquareUser
+
+@synthesize firstName = _firstName;
+@synthesize lastName = _lastName;
+@synthesize checkins = _checkins;
+@synthesize mayorships = _mayorships;
+
++ (NSDictionary*)elementToPropertyMappings {
+    return [NSDictionary dictionaryWithKeysAndObjects:            
+            @"firstname", @"firstName",
+            @"lastname", @"lastName",
+            nil];
+}
+
++ (NSDictionary*)elementToRelationshipMappings {
+    return [NSDictionary dictionaryWithKeysAndObjects:
+            @"mayorships.items", @"mayorships",
+            @"checkins", @"checkins",
+            nil];
+}
+
+- (NSString*)description {
+    return [NSString stringWithFormat:@"firstName = %@, lastName = %@, mayorships = %@, checkins = %@", 
+            _firstName, _lastName, _mayorships, _checkins];
+}
+
+@end
+
+@interface RKMayorship : RKObject {
+    NSString* _name;
+    NSNumber* _visitCount;
+}
+
+@property (nonatomic, retain) NSString* name;
+@property (nonatomic, retain) NSNumber* visitCount;
+
+@end
+
+@implementation RKMayorship
+
+@synthesize name = _name;
+@synthesize visitCount = _visitCount;
+
++ (NSDictionary*)elementToPropertyMappings {
+    return [NSDictionary dictionaryWithKeysAndObjects:            
+            @"name", @"name",
+            @"visit_count", @"visitCount",
+            nil];
+}
+
+@end
+
+@interface RKCheckin : RKObject {
+    NSString* _name;
+    NSNumber* _longitude;
+    NSNumber* _latitude;
+}
+
+@property (nonatomic, retain) NSString* name;
+@property (nonatomic, retain) NSNumber* longitude;
+@property (nonatomic, retain) NSNumber* latitude;
+
+@end
+
+@implementation RKCheckin
+
+@synthesize name = _name;
+@synthesize longitude = _longitude;
+@synthesize latitude = _latitude;
+
++ (NSDictionary*)elementToPropertyMappings {
+    return [NSDictionary dictionaryWithKeysAndObjects:            
+            @"name", @"name",
+            @"longitude", @"longitude",
+            @"latitude", @"latitude",
+            nil];
+}
+
+@end
+
+@interface RKObjectMapperPayloadItemsWithDuplicateKeysSpec : NSObject <UISpec> {
+}
+@end
+
+@implementation RKObjectMapperPayloadItemsWithDuplicateKeysSpec
+
+- (NSString*)JSON {
+    return @"{"
+    @"    \"response\": {"
+    @"        \"user\": {"
+    @"            \"id\": 1234,"
+    @"            \"firstname\": \"Rich\","
+    @"            \"lastname\": \"Wolf\","
+    @"            \"mayorships\": {"
+    @"                \"count\": 5,"
+    @"                \"items\": ["
+    @"                {"
+    @"                    \"name\": \"SpffiyCo\","
+    @"                    \"visit_count\": 97"
+    @"                },"
+    @"                {"
+    @"                    \"name\": \"Awesomeville\","
+    @"                    \"visit_count\": 235"
+    @"                }"
+    @"                ]"
+    @"            },"
+    @"            \"checkins\": {"
+    @"                \"count\": 15,"
+    @"                \"items\": ["
+    @"                {"
+    @"                    \"name\": \"YummyStation\","
+    @"                    \"longitude\": -80.0,"
+    @"                    \"latitude\": 42.0"
+    @"                },"
+    @"                {"
+    @"                    \"name\": \"Pizzaland\","
+    @"                    \"longitude\": -81.0,"
+    @"                    \"latitude\": 41.0"
+    @"                }"
+    @"                ]"
+    @"            }"
+    @"        }"
+    @"    }"
+    @"}";
+}
+
+- (void)itShouldMapOverlappingNamesUsingKeyPaths {
+    RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
+	mapper.format = RKMappingFormatJSON;
+    
+    [mapper registerClass:[RKFoursquareUser class] forElementNamed:@"user"];
+    [mapper registerClass:[RKMayorship class] forElementNamed:@"mayorships.items"];
+    [mapper registerClass:[RKCheckin class] forElementNamed:@"checkins.items"];
+    
+    [mapper mapFromString:[self JSON] toClass:nil keyPath:@"response"];
+    
+    NSLog(@"This Spec is disabled! Cannot handle these sorts of mappings with current mapper.");
 }
 
 @end
