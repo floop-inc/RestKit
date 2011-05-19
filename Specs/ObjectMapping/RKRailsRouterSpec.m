@@ -23,6 +23,7 @@
 - (void)beforeAll {
 	RKObjectManager* objectManager = [RKObjectManager objectManagerWithBaseURL:@"http://localhost:4567"];
 	objectManager.objectStore = [[RKManagedObjectStore alloc] initWithStoreFilename:@"RestKitSpecs.sqlite"];
+    [RKObjectManager setSharedManager:objectManager];
 }
 
 - (void)itShouldRaiseErrorWhenAskedToRouteAnUnregisteredModel {
@@ -66,7 +67,7 @@
     cat2.birthYear = [NSNumber numberWithInt:2003];
     [human addCatsObject:cat2];
     
-    NSObject<RKRequestSerializable>* serialization = [router serializationForObject:human method:RKRequestMethodPOST];
+    NSDictionary* serialization = (NSDictionary*) [router serializationForObject:human method:RKRequestMethodPOST];
     NSArray* serializedCats = [serialization objectForKey:@"human[cats_attributes]"];
     for (NSDictionary *catDict in serializedCats) {
         [expectThat([catDict objectForKey:@"name"]) shouldNot:be(nil)];
@@ -92,7 +93,7 @@
     cat2.railsID = [NSNumber numberWithInt:2];
     [human addCatsObject:cat2];
     
-    NSObject<RKRequestSerializable>* serialization = [router serializationForObject:human method:RKRequestMethodPOST];
+    NSDictionary* serialization = (NSDictionary*) [router serializationForObject:human method:RKRequestMethodPOST];
     NSArray* serializedCats = [serialization objectForKey:@"human[cats_attributes]"];
     for (NSDictionary *catDict in serializedCats) {
         [expectThat([catDict objectForKey:@"name"]) shouldNot:be(nil)];

@@ -28,6 +28,7 @@
     NSDate* updatedAt;
     NSString* image;
     NSString* email;
+    NSArray* interests;
 }
 
 @property (nonatomic, retain) NSNumber* userID;
@@ -38,12 +39,13 @@
 @property (nonatomic, retain) NSDate* updatedAt;
 @property (nonatomic, retain) NSString* image;
 @property (nonatomic, retain) NSString* email;
+@property (nonatomic, retain) NSArray* interests;
 
 @end
 
 @implementation RKObjectMapperSpecUser
 
-@synthesize userID, encryptedPassword, name, salt, createdAt, updatedAt, image, email;
+@synthesize userID, encryptedPassword, name, salt, createdAt, updatedAt, image, email, interests;
 
 + (NSDictionary*)elementToPropertyMappings {
     return [NSDictionary dictionaryWithKeysAndObjects:
@@ -55,6 +57,7 @@
             @"updated_at", @"updatedAt",
             @"image", @"image",
             @"email", @"email",
+            @"interests", @"interests",
             nil];
 }
 
@@ -84,6 +87,25 @@
     [expectThat(user.name) should:be(@"mimi")];
 }
 
+- (void)itShouldMapATargetObjectWithNamespacedJSON {
+    RKObjectMapper* mapper = [[RKObjectMapper new] autorelease];
+    [mapper registerClass:[RKObjectMapperSpecUser class] forElementNamed:@"user"];
+	mapper.format = RKMappingFormatJSON;
+    RKObjectMapperSpecUser* user = [[RKObjectMapperSpecUser new] autorelease];
+    [mapper mapObject:user fromString:[self userJSON]];    
+    [expectThat(user.name) should:be(@"mimi")];
+}
+
+- (void)itShouldMapCorrectlyWithObjectClassSpecifiedAndElementRegistered {
+    RKObjectMapper* mapper = [[RKObjectMapper new] autorelease];
+    [mapper registerClass:[RKObjectMapperSpecUser class] forElementNamed:@"user"];
+	mapper.format = RKMappingFormatJSON;
+    NSString* JSON = [NSString stringWithFormat:@"[%@]", [self userJSON]];
+    NSArray* objects = [mapper mapFromString:JSON toClass:[RKObjectMapperSpecUser class] keyPath:nil];
+    RKObjectMapperSpecUser* user = [objects lastObject];
+    [expectThat(user.name) should:be(@"mimi")];
+}
+
 - (void)itShouldMapWhenGivenRegisteredElementsAndASingleObject {
     RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
     [mapper registerClass:[RKObjectMapperSpecUser class] forElementNamed:@"user"];
@@ -96,7 +118,6 @@
 	RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
 	mapper.format = RKMappingFormatJSON;
 	[mapper registerClass:[RKMappableObject class] forElementNamed:@"test_serialization_class"];
-	[mapper registerClass:[RKMappableObject class] forElementNamed:@"test_serialization_class"];
 	[mapper registerClass:[RKMappableAssociation class] forElementNamed:@"has_many"];
 	[mapper registerClass:[RKMappableAssociation class] forElementNamed:@"has_one"];
 	id result = [mapper mapFromString:[self jsonString]];
@@ -105,12 +126,23 @@
 	[expectThat([result dateTest]) shouldNot:be(nil)];
 	[expectThat([result numberTest]) should:be(2)];
 	[expectThat([result stringTest]) should:be(@"SomeString")];
+	[expectThat([result urlTest]) should:be([NSURL URLWithString:@"https://github.com/twotoasters/RestKit"])];
 	
 	[expectThat([result hasOne]) shouldNot:be(nil)];
 	[expectThat([[result hasOne] testString]) should:be(@"A String")];
 	
 	[expectThat([result hasMany]) shouldNot:be(nil)];
 	[expectThat([[result hasMany] count]) should:be(2)];
+}
+
+- (void)itShouldLogAWarningWhenMultipleKeyPathsMatchForADictionary {
+    RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
+	mapper.format = RKMappingFormatJSON;
+	[mapper registerClass:[RKMappableObject class] forElementNamed:@"test_serialization_class"];
+	[mapper registerClass:[RKMappableAssociation class] forElementNamed:@"test_serialization_class.has_one"];
+	[mapper mapFromString:[self jsonString]];
+    // TODO: Cannot unit test here -- need to factor NSLog out to allow mock object injection
+    NSLog(@">> PENDING");
 }
 
 - (void)itShouldMapObjectsFromJSON {
@@ -205,24 +237,23 @@
     [expectThat(user.email) should:be(nil)];
 }
 
+- (NSString*)arrayOfStringsJSON {
+    return @"{\"user\":"
+    @"{\"encrypted_password\":\"68dad82a867c4a61719fec594c119188ed35cd3b7d42eed1647e46d85f2ffdd8\",\"name\":\"mimi\","
+    @"\"salt\":\"809c79c24cbebfe3f9feea2e9bf98255e5af0f0b8514b6c0d71dcc63fa083688\",\"created_at\":\"2011-02-16T23:04:22Z\","
+    @"\"updated_at\":\"2011-02-16T23:04:22Z\",\"id\":"
+    @"10,\"interests\":[\"basketball\", \"soccer\"]}}";
+}
+
 - (void)itShouldMapAnArrayOfStringsToAProperty {
-/*
- 'tags' =>
- array (
- 'url' => 'http://localhost/~David/gallery3/rest/item_tags/1?
- output=html',
- 'members' =>
- array (
- 0 => 'http://localhost/~David/gallery3/rest/tag_item/379,1?
- output=html',
- 1 => 'http://localhost/~David/gallery3/rest/tag_item/380,1?
- output=html',
- 2 => 'http://localhost/~David/gallery3/rest/tag_item/381,1?
- output=html',
- ),
- )
-*/
-    // TODO: IMPLEMENT ME
+    RKObjectMapperSpecUser* user = [RKObjectMapperSpecUser object];
+    RKObjectMapper* mapper = [[RKObjectMapper alloc] init];
+	mapper.format = RKMappingFormatJSON;
+    [mapper registerClass:[RKObjectMapperSpecUser class] forElementNamed:@"user"];
+    
+    [mapper mapObject:user fromString:[self arrayOfStringsJSON]];
+    NSArray* interests = [NSArray arrayWithObjects:@"basketball", @"soccer", nil];
+    [expectThat(user.interests) should:be(interests)];
 }
 
 - (void)itShouldNotUpdateNilPropertyToNil {
@@ -312,6 +343,7 @@
 	@"      \"date_test\":\"2009-08-17T19:24:40Z\","
 	@"      \"number_test\":2,"
 	@"      \"string_test\":\"SomeString\","
+	@"      \"url_test\":\"https://github.com/twotoasters/RestKit\","
 	@"      \"has_one\":{"
 	@"         \"test_string\":\"A String\""
 	@"      },"
