@@ -93,7 +93,9 @@
         
         // TODO: Unwind hard coding of JSON specific assumptions
 		if ([response isJSON]) {
-                        [[NSNotificationCenter defaultCenter] postNotificationName:@"401Error" object:self userInfo:[response bodyAsJSON]];
+                        if ([[[[response bodyAsJSON] objectForKey:@"status"] objectForKey:@"code"] isEqualToNumber:[NSNumber numberWithInt:401]]) {
+                                [[NSNotificationCenter defaultCenter] postNotificationName:@"401Error" object:self userInfo:[response bodyAsJSON]];
+                        }
 			error = [self.objectMapper parseErrorFromString:[response bodyAsString]];
 			[(NSObject<RKObjectLoaderDelegate>*)_delegate objectLoader:self didFailWithError:error];
 		} else {
