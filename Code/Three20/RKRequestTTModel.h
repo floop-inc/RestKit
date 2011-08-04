@@ -8,6 +8,7 @@
 
 #import <Three20/Three20.h>
 #import "../RestKit.h"
+#import "../Network/NSDictionary+RKRequestSerialization.h"
 
 /**
  * Generic class for loading a remote model using a RestKit request and supplying the model to a
@@ -21,7 +22,7 @@
 	BOOL _emptyReloadAttempted;
 
 	NSString* _resourcePath;
-	NSDictionary* _params;
+	NSObject<RKRequestSerializable>* _params;
 	RKRequestMethod _method;
 	Class _objectClass;
 	NSString* _keyPath;
@@ -47,7 +48,7 @@
 /**
  * Request parameters
  */
-@property (nonatomic, retain) NSDictionary* params;
+@property (nonatomic, retain) NSObject<RKRequestSerializable>* params;
 
 /**
  * The HTTP method to load the models with. Defaults to RKRequestMethodGET
@@ -64,8 +65,8 @@
  * Init methods for creating new models
  */
 - (id)initWithResourcePath:(NSString*)resourcePath;
-- (id)initWithResourcePath:(NSString*)resourcePath params:(NSDictionary*)params;
-- (id)initWithResourcePath:(NSString*)resourcePath params:(NSDictionary*)params objectClass:(Class)klass;
+- (id)initWithResourcePath:(NSString*)resourcePath params:(NSObject<RKRequestSerializable>*)params;
+- (id)initWithResourcePath:(NSString*)resourcePath params:(NSObject<RKRequestSerializable>*)params objectClass:(Class)klass;
 - (id)initWithResourcePath:(NSString*)resourcePath params:(NSDictionary*)params objectClass:(Class)klass keyPath:(NSString*)keyPath;
 - (id)initWithResourcePath:(NSString*)resourcePath params:(NSDictionary*)params method:(RKRequestMethod)method;
 

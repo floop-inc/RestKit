@@ -61,7 +61,7 @@ static NSString* const kDefaultLoadedTimeKey = @"RKRequestTTModelDefaultLoadedTi
 	return self;
 }
 
-- (id)initWithResourcePath:(NSString*)resourcePath params:(NSDictionary*)params {
+- (id)initWithResourcePath:(NSString*)resourcePath params:(NSObject<RKRequestSerializable>*)params {
     self = [self initWithResourcePath:resourcePath];
 	if (self) {
 		self.params = [params retain];
@@ -69,7 +69,7 @@ static NSString* const kDefaultLoadedTimeKey = @"RKRequestTTModelDefaultLoadedTi
 	return self;
 }
 
-- (id)initWithResourcePath:(NSString*)resourcePath params:(NSDictionary*)params objectClass:(Class)klass {
+- (id)initWithResourcePath:(NSString*)resourcePath params:(NSObject<RKRequestSerializable>*)params objectClass:(Class)klass {
     self = [self initWithResourcePath:resourcePath params:params];
 	if (self) {
 		_objectClass = [klass retain];
