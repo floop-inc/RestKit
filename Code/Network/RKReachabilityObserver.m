@@ -99,49 +99,49 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 }
 
 - (RKReachabilityNetworkStatus)networkStatus {
-	NSAssert(_reachabilityRef != NULL, @"currentNetworkStatus called with NULL reachabilityRef");
-	RKReachabilityNetworkStatus status = RKReachabilityNotReachable;
-	SCNetworkReachabilityFlags flags;
-	
-	if (!hasNetworkAvailabilityBeenDetermined) {
-		return RKReachabilityIndeterminate;
-	}
-	
-	
-	if (SCNetworkReachabilityGetFlags(_reachabilityRef, &flags)) {		
-		if ((flags & kSCNetworkReachabilityFlagsReachable) == 0) {
-			// if target host is not reachable
-			return RKReachabilityNotReachable;
-		}
-		
-		if ((flags & kSCNetworkReachabilityFlagsConnectionRequired) == 0) {
-			// if target host is reachable and no connection is required
-			//  then we'll assume (for now) that your on Wi-Fi
-			status = RKReachabilityReachableViaWiFi;
-		}
-		
-		
-		if ((((flags & kSCNetworkReachabilityFlagsConnectionOnDemand ) != 0) ||
-			 (flags & kSCNetworkReachabilityFlagsConnectionOnTraffic) != 0)) {
-			// ... and the connection is on-demand (or on-traffic) if the
-			//     calling application is using the CFSocketStream or higher APIs
-			
-			if ((flags & kSCNetworkReachabilityFlagsInterventionRequired) == 0) {
-				// ... and no [user] intervention is needed
-				status = RKReachabilityReachableViaWiFi;
-			}
-		}
-        
-#if TARGET_OS_IPHONE
-		if ((flags & kSCNetworkReachabilityFlagsIsWWAN) == kSCNetworkReachabilityFlagsIsWWAN) {
-			// ... but WWAN connections are OK if the calling application
-			//     is using the CFNetwork (CFSocketStream?) APIs.
-			status = RKReachabilityReachableViaWWAN;
-		}
-#endif
-	}
+//	NSAssert(_reachabilityRef != NULL, @"currentNetworkStatus called with NULL reachabilityRef");
+//	RKReachabilityNetworkStatus status = RKReachabilityNotReachable;
+//	SCNetworkReachabilityFlags flags;
+//	
+//	if (!hasNetworkAvailabilityBeenDetermined) {
+//		return RKReachabilityIndeterminate;
+//	}
+//	
+//	
+//	if (SCNetworkReachabilityGetFlags(_reachabilityRef, &flags)) {		
+//		if ((flags & kSCNetworkReachabilityFlagsReachable) == 0) {
+//			// if target host is not reachable
+//			return RKReachabilityNotReachable;
+//		}
+//		
+//		if ((flags & kSCNetworkReachabilityFlagsConnectionRequired) == 0) {
+//			// if target host is reachable and no connection is required
+//			//  then we'll assume (for now) that your on Wi-Fi
+//			status = RKReachabilityReachableViaWiFi;
+//		}
+//		
+//		
+//		if ((((flags & kSCNetworkReachabilityFlagsConnectionOnDemand ) != 0) ||
+//			 (flags & kSCNetworkReachabilityFlagsConnectionOnTraffic) != 0)) {
+//			// ... and the connection is on-demand (or on-traffic) if the
+//			//     calling application is using the CFSocketStream or higher APIs
+//			
+//			if ((flags & kSCNetworkReachabilityFlagsInterventionRequired) == 0) {
+//				// ... and no [user] intervention is needed
+//				status = RKReachabilityReachableViaWiFi;
+//			}
+//		}
+//        
+//#if TARGET_OS_IPHONE
+//		if ((flags & kSCNetworkReachabilityFlagsIsWWAN) == kSCNetworkReachabilityFlagsIsWWAN) {
+//			// ... but WWAN connections are OK if the calling application
+//			//     is using the CFNetwork (CFSocketStream?) APIs.
+//			status = RKReachabilityReachableViaWWAN;
+//		}
+//#endif
+//	}
     
-	return status;	
+	return RKReachabilityReachableViaWiFi;	
 }
 
 - (BOOL)isNetworkReachable {
