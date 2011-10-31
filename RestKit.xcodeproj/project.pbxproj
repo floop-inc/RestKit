@@ -1876,8 +1876,8 @@
 					armv7,
 				);
 				"ARCHS[sdk=macosx*]" = (
-					arm6,
-					arm7,
+					armv6,
+					armv7,
 				);
 				BUILD_STYLE = Release;
 				GCC_C_LANGUAGE_STANDARD = c99;
@@ -1966,8 +1966,8 @@
 					armv7,
 				);
 				"ARCHS[sdk=macosx*]" = (
-					arm6,
-					arm7,
+					armv6,
+					armv7,
 				);
 				BUILD_STYLE = Release;
 				GCC_C_LANGUAGE_STANDARD = c99;
